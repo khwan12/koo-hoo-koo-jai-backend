@@ -1,0 +1,17 @@
+{
+  "name": "คู่ใจ — เพื่อนที่เข้าใจคุณ",
+  "short_name": "คู่ใจ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff0f5",
+  "theme_color": "#ff69b4",
+  "icons": [{
+    "src": "https://cdn-icons-png.flaticon.com/512/2913/2913231.png",
+    "sizes": "192x192",
+    "type": "image/png"
+  }, {
+    "src": "https://cdn-icons-png.flaticon.com/512/2913/2913231.png",
+    "sizes": "512x512",
+    "type": "image/png"
+  }]
+}

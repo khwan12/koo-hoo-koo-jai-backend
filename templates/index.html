@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>คู่ใจ — เพื่อนที่เข้าใจคุณ</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #ff69b4;
+            --secondary-color: #ffb6c1;
+            --background-color: #fff0f5;
+            --text-color: #4a4a4a;
+            --font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+            --user-bubble-bg: linear-gradient(135deg, #ff69b4, #ff1493);
+            --ai-bubble-bg: #ffeef2;
+        }
+        .dark-mode {
+            --background-color: #1e1e2e;
+            --text-color: #e0e0ff;
+            --ai-bubble-bg: #2d2d44;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+        html, body { height: 100%; overflow: hidden; }
+        body { background-color: var(--background-color); display: flex; justify-content: center; align-items: center; padding: 8px; transition: background-color 0.5s; }
+        .app-container { width: 100%; max-width: 420px; border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); overflow: hidden; display: flex; flex-direction: column; height: 100%; max-height: 95vh; border: 1px solid var(--secondary-color); transition: border-color 0.5s; }
+        .dark-mode .app-container { background: rgba(30, 30, 46, 0.95); border-color: #555; }
+        .app-header { background: var(--user-bubble-bg); color: white; padding: 10px 16px; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .header-title { display: flex; align-items: center; gap: 10px; }
+        .header-logo { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .header-clock { font-size: 0.85rem; font-weight: 400; }
+        .header-actions { display: flex; gap: 6px; }
+        .header-btn { background: rgba(255,255,255,0.25); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; display:flex; align-items:center; justify-content:center; }
+        .chat-body { 
+            flex: 1; 
+            padding: 16px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+            background-color: var(--background-color);
+            background-size: cover;
+            background-position: center;
+            transition: background 0.5s;
+        }
+        .dark-mode .chat-body { background-color: #1a1a2a; }
+        .message-row { display: flex; align-items: flex-end; gap: 8px; max-width: 88%; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-message-row { align-self: flex-start; }
+        .user-message-row { align-self: flex-end; flex-direction: row-reverse; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .message { padding: 12px 16px; border-radius: 20px; line-height: 1.5; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .bot { background: var(--ai-bubble-bg); color: #5c3b49; border-bottom-left-radius: 6px; }
+        .dark-mode .bot { color: #e0e0ff; }
+        .user { background: var(--user-bubble-bg); color: white; border-bottom-right-radius: 6px; }
+        .message img { max-width: 100%; border-radius: 10px; margin-top: 8px; }
+        .input-area { padding: 10px; background: white; border-top: 1px solid var(--secondary-color); flex-shrink: 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
+        .dark-mode .input-area { background: #2d2d44; border-color: #555; }
+        .toolkit-bar { display: flex; justify-content: space-around; margin-bottom: 8px; flex-wrap: wrap; gap: 5px; }
+        .toolkit-btn { font-size: 1.2rem; background: none; border: none; color: #d1c4e9; cursor: pointer; padding: 6px; transition: color 0.2s; }
+        .toolkit-btn:hover { color: var(--primary-color); }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        #user-input { flex: 1; padding: 12px 16px; border: 2px solid var(--secondary-color); border-radius: 22px; outline: none; font-size: 0.95rem; background: white; }
+        .dark-mode #user-input { background: #2d2d44; color: white; border-color: #555; }
+        .send-btn { background: var(--primary-color); color: white; border: none; border-radius: 50%; width: 46px; height: 46px; cursor: pointer; font-size: 1.2rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal.active { opacity: 1; pointer-events: all; }
+        .modal-content { background: white; width: 92%; max-width: 420px; border-radius: 16px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+        .dark-mode .modal-content { background: #2d2d44; color: white; }
+        .close-modal { float: right; cursor: pointer; font-size: 1.4rem; border: none; background: none; color: #aaa; }
+        .reference, .disclaimer { font-size: 0.75rem; color: #888; margin-top: 10px; font-style: italic; border-top: 1px dashed var(--secondary-color); padding-top: 6px; }
+        .typing-indicator { display: flex; gap: 4px; align-items: center; justify-content: center; }
+        .typing-indicator span { animation: bounce 1.4s infinite ease-in-out both; width: 6px; height: 6px; background: var(--primary-color); border-radius: 50%; display: inline-block; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0.5); opacity: 0.5; } 40% { transform: scale(1.0); opacity: 1; } }
+        .theme-selector, .background-selector, .avatar-selector { display: flex; flex-wrap: wrap; justify-content: center; padding: 8px 0; gap: 8px; }
+        .theme-btn, .bg-btn, .avatar-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; background-size: cover; background-position: center; }
+        .theme-btn.active, .bg-btn.active, .avatar-btn.active { border-color: black; }
+        .music-player { margin-top: 8px; border-radius: 10px; overflow: hidden; aspect-ratio: 16 / 9; width: 100%; }
+        #game-board { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+        .game-btn { padding: 10px; border-radius: 10px; background: var(--ai-bubble-bg); border: 1px solid var(--secondary-color); text-align: center; cursor: pointer; font-size: 0.95rem; }
+        .dark-mode .game-btn { background: #3a3a5a; }
+        .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: var(--primary-color); color: white; padding: 8px 16px; border-radius: 20px; z-index: 2000; font-weight: 600; box-shadow: 0 3px 8px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s; font-size: 0.9rem; }
+        .toast.show { opacity: 1; }
+        .mood-btn { font-size: 1.6rem; padding: 8px; border-radius: 10px; border: 1px solid var(--secondary-color); background: var(--ai-bubble-bg); cursor: pointer; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; }
+        .breathing-circle { width: 160px; height: 160px; border-radius: 50%; background: var(--primary-color); margin: 15px auto; display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; transition: transform 1s, background-color 1s; }
+        .more-menu { position: absolute; top: 50px; right: 10px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 10px; z-index: 100; display: none; }
+        .dark-mode .more-menu { background: #2d2d44; }
+        .more-menu.active { display: block; }
+        .more-item { padding: 8px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .more-item:hover { background: var(--ai-bubble-bg); }
+        .upload-btn { background: #e0e0e0; border: 1px dashed #999; color: #666; padding: 8px; border-radius: 8px; text-align: center; cursor: pointer; margin-top: 8px; }
+        .upload-btn:hover { background: #d0d0d0; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <div class="header-title">
+                <img id="ai-avatar-display" class="header-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23ff69b4'/%3E%3Ctext x='12' y='16' text-anchor='middle' fill='white' font-size='12'%3E💖%3C/text%3E%3C/svg%3E" alt="AI Avatar">
+                <span id="ai-name-display">คู่ใจ</span>
+            </div>
+            <div id="clock"></div>
+            <div class="header-actions">
+                <button class="header-btn" id="mood-btn" title="ไดอารี่อารมณ์">😊</button>
+                <button class="header-btn" id="help-now-btn" title="ช่วยฉันตอนนี้">🆘</button>
+                <button class="header-btn" id="more-btn" title="เพิ่มเติม">⋯</button>
+                <div class="more-menu" id="more-menu">
+                    <div class="more-item" id="history-item">📜 ประวัติ</div>
+                    <div class="more-item" id="clear-item">🗑️ ล้างแชท</div>
+                    <div class="more-item" id="settings-item">⚙️ ตั้งค่า</div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-body" id="chat-body"></div>
+        <div class="input-area">
+            <div class="toolkit-bar">
+                <button class="toolkit-btn" id="game-btn" title="เล่นเกม">🎮</button>
+                <button class="toolkit-btn" id="assessment-btn" title="ประเมินสุขภาพจิต">🧠</button>
+                <button class="toolkit-btn" id="attach-btn" title="แนบไฟล์">📎</button>
+                <button class="toolkit-btn" id="camera-btn" title="ถ่ายรูป">📸</button>
+                <button class="toolkit-btn" id="hospital-btn" title="หาโรงพยาบาล">🏥</button>
+                <button class="toolkit-btn" id="silent-btn" title="ระบายแบบไม่ต้องตอบ">💭</button>
+                <input type="file" id="image-input" accept="image/*" hidden>
+                <input type="file" id="camera-input" accept="image/*" capture="camera" hidden>
+            </div>
+            <div class="input-row">
+                <input type="text" id="user-input" placeholder="เปิดเพลง, ดูหนัง, หรือคุยเล่น...">
+                <button class="send-btn" id="send-btn">➤</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="tool-modal"><div class="modal-content"><button class="close-modal">×</button><h3 id="tool-title"></h3><div id="tool-content" style="max-height: 60vh; overflow-y: auto;"></div></div></div>
+    <div class="toast" id="toast"></div>
+    <script>
+    // ========== GLOBAL VARIABLES ==========
+    let dom, state;
+    // ========== CONFIG ==========
+    const themes = {
+        pink: { '--primary-color': '#ff69b4', '--secondary-color': '#ffb6c1', '--background-color': '#fff0f5', '--user-bubble-bg': 'linear-gradient(135deg, #ff69b4, #ff1493)', '--ai-bubble-bg': '#ffeef2' },
+        mint: { '--primary-color': '#26a69a', '--secondary-color': '#80cbc4', '--background-color': '#e0f2f1', '--user-bubble-bg': 'linear-gradient(135deg, #26a69a, #00796b)', '--ai-bubble-bg': '#e0f2f1' },
+        lavender: { '--primary-color': '#9575cd', '--secondary-color': '#b39ddb', '--background-color': '#f3e5f5', '--user-bubble-bg': 'linear-gradient(135deg, #9575cd, #7e57c2)', '--ai-bubble-bg': '#ede7f6' },
+        sunset: { '--primary-color': '#ff7043', '--secondary-color': '#ffb74d', '--background-color': '#fff3e0', '--user-bubble-bg': 'linear-gradient(135deg, #ff7043, #ff5722)', '--ai-bubble-bg': '#ffe0b2' },
+        ocean: { '--primary-color': '#0288d1', '--secondary-color': '#4fc3f7', '--background-color': '#e1f5fe', '--user-bubble-bg': 'linear-gradient(135deg, #0288d1, #01579b)', '--ai-bubble-bg': '#b3e5fc' },
+        forest: {'--primary-color': '#43a047', '--secondary-color': '#81c784', '--background-color': '#e8f5e9', '--user-bubble-bg': 'linear-gradient(135deg, #43a047, #2e7d32)', '--ai-bubble-bg': '#c8e6c9'},
+        sand: {'--primary-color': '#fbc02d', '--secondary-color': '#fff176', '--background-color': '#fffde7', '--user-bubble-bg': 'linear-gradient(135deg, #fbc02d, #f9a825)', '--ai-bubble-bg': '#fff9c4'},
+        charcoal: {'--primary-color': '#546e7a', '--secondary-color': '#90a4ae', '--background-color': '#eceff1', '--user-bubble-bg': 'linear-gradient(135deg, #546e7a, #37474f)', '--ai-bubble-bg': '#cfd8dc'},
+    };
+    const chatBackgrounds = {
+        default: 'none',
+        bg1: `url('https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=2400&auto=format&fit=crop')`,
+        bg2: `url('https://images.unsplash.com/photo-1507525428034-b723a9ce6890?q=80&w=2670&auto=format&fit=crop')`,
+        bg3: `url('https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?q=80&w=2670&auto=format&fit=crop')`,
+        bg4: `url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2700&auto=format&fit=crop')`,
+        bg5: `url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?q=80&w=2700&auto=format&fit=crop')`
+    };
+    const avatars = {
+        default: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23ff69b4'/%3E%3Ctext x='12' y='16' text-anchor='middle' fill='white' font-size='12'%3E💖%3C/text%3E%3C/svg%3E",
+        cat: "https://cdn-icons-png.flaticon.com/512/456/456201.png",
+        robot: "https://cdn-icons-png.flaticon.com/512/2913/2913257.png",
+        star: "https://cdn-icons-png.flaticon.com/512/1828/1828884.png",
+        heart: "https://cdn-icons-png.flaticon.com/512/2913/2913231.png",
+        moon: "https://cdn-icons-png.flaticon.com/512/2913/2913265.png"
+    };
+    const typingIndicators = {
+        emoji: `<span>🧠</span><span>💭</span><span>✨</span>`,
+        dots: `<span></span><span></span><span></span>`,
+        wave: `<span>~</span><span>~</span><span>~</span>`,
+        hearts: `<span>❤️</span><span>🧡</span><span>💛</span>`,
+        stars: `<span>⭐</span><span>🌟</span><span>✨</span>`,
+        bubbles: `<span>●</span><span>○</span><span>●</span>`,
+        loading: `<span>L</span><span>o</span><span>a</span><span>d</span><span>i</span><span>n</span><span>g</span>`,
+        ai: `<span>A</span><span>I</span><span>...</span>`,
+        thinking: `<span>🤔</span><span>💭</span><span>💡</span>`,
+        sparkles: `<span>✨</span><span>💫</span><span>🌟</span>`
+    };
+    // ========== UTIL FUNCTIONS ==========
+    function setTheme(themeName) {
+        const theme = themes[themeName];
+        for (const [key, value] of Object.entries(theme)) {
+            document.documentElement.style.setProperty(key, value);
+        }
+        state.settings.theme = themeName;
+        saveSettings();
+    }
+    function setChatBackground(bgKey) {
+        if (bgKey === 'custom') {
+            const customBg = localStorage.getItem('koojai_custom_chat_bg');
+            if (customBg) {
+                dom.chatBody.style.backgroundImage = `url('${customBg}')`;
+                dom.chatBody.style.backgroundColor = 'transparent';
+            }
+        } else {
+            const bgValue = chatBackgrounds[bgKey] || 'none';
+            if (bgValue === 'none') {
+                dom.chatBody.style.backgroundImage = 'none';
+                dom.chatBody.style.backgroundColor = themes[state.settings.theme]['--background-color'];
+            } else {
+                dom.chatBody.style.backgroundImage = bgValue;
+                dom.chatBody.style.backgroundColor = 'transparent';
+            }
+        }
+        state.settings.chatBackground = bgKey;
+        saveSettings();
+    }
+    function setAvatar(avatarKey) {
+        if (avatarKey === 'custom') {
+            const customAvatar = localStorage.getItem('koojai_custom_avatar');
+            if (customAvatar) {
+                dom.aiAvatarDisplay.src = customAvatar;
+            }
+        } else {
+            dom.aiAvatarDisplay.src = avatars[avatarKey] || avatars.default;
+        }
+        state.settings.aiAvatar = avatarKey;
+        saveSettings();
+    }
+    function toggleDarkMode() {
+        state.settings.darkMode = !state.settings.darkMode;
+        if (state.settings.darkMode) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+        saveSettings();
+    }
+    function saveSettings() {
+        localStorage.setItem('koojai_grandfinale_settings', JSON.stringify(state.settings));
+    }
+    function showToast(message) {
+        dom.toast.textContent = message;
+        dom.toast.classList.add('show');
+        setTimeout(() => {
+            dom.toast.classList.remove('show');
+        }, 2500);
+    }
+    function handleFileUpload(file, type) {
+        if (!file) return null;
+        if (file.size > 5 * 1024 * 1024) {
+            showToast("ไฟล์ต้องมีขนาดไม่เกิน 5MB ค่ะ");
+            return null;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            if (type === 'avatar') {
+                localStorage.setItem('koojai_custom_avatar', dataUrl);
+                setAvatar('custom');
+                const avatarBtn = document.querySelector('.avatar-btn[data-avatar="custom"]');
+                if (avatarBtn) avatarBtn.style.backgroundImage = `url('${dataUrl}')`;
+            } else if (type === 'background') {
+                localStorage.setItem('koojai_custom_chat_bg', dataUrl);
+                setChatBackground('custom');
+                const bgBtn = document.querySelector('.bg-btn[data-bg="custom"]');
+                if (bgBtn) bgBtn.style.backgroundImage = `url('${dataUrl}')`;
+            }
+        };
+        reader.readAsDataURL(file);
+        return true;
+    }
+    // ========== AI CHAT ==========
+    async function getAiResponse(prompt, image = null) {
+        showTyping();
+        try {
+            const payload = {
+                prompt: prompt,
+                history: state.conversationHistory.slice(-6),
+                profile: {
+                    aiName: state.settings.aiName,
+                    aiPersona: "เป็นเพื่อนที่น่ารักและเป็นมิตร",
+                    language: state.settings.language
+                }
+            };
+            if (image) payload.image = image;
+            const response = await fetch("/chat", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await response.text();
+                console.error("Non-JSON response from backend:", text);
+                throw new Error("ระบบขัดข้องชั่วคราว (ไม่ใช่ JSON)");
+            }
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || err.data || "ไม่ทราบสาเหตุ");
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching AI response:", error);
+            return { response_type: 'text', data: `⛔️ **เกิดข้อผิดพลาด:** ${error.message || 'ไม่ทราบสาเหตุ'}` };
+        } finally {
+            hideTyping();
+        }
+    }
+    async function handleSend() {
+        const text = dom.userInput.value.trim();
+        if (!text && !dom.imageInput.files[0] && !dom.cameraInput.files[0]) return;
+        if (text) {
+            addMessage({ text: text }, 'user');
+        }
+        dom.userInput.value = '';
+        let imageData = null;
+        if (dom.imageInput.files[0] || dom.cameraInput.files[0]) {
+            const file = dom.imageInput.files[0] || dom.cameraInput.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showToast("ไฟล์รูปภาพต้องมีขนาดไม่เกิน 5MB ค่ะ");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                imageData = e.target.result;
+                const imgHtml = `<img src="${imageData}" alt="Attached Image" style="max-width:100%; border-radius:10px;">`;
+                addMessage({ text: imgHtml }, 'user');
+                const aiResponse = await getAiResponse(text || "อธิบายภาพนี้ให้หน่อยค่ะ", imageData);
+                handleAiResponse(aiResponse);
+            };
+            reader.readAsDataURL(file);
+            dom.imageInput.value = '';
+            dom.cameraInput.value = '';
+        } else {
+            const aiResponse = await getAiResponse(text);
+            handleAiResponse(aiResponse);
+        }
+    }
+    function handleAiResponse(aiResponse) {
+        if (aiResponse.response_type === 'music') {
+            addMessage({ text: aiResponse.data.text }, 'bot');
+            addMusicPlayer(aiResponse.data.videoId);
+        } else if (aiResponse.response_type === 'movie') {
+            addMessage({ text: aiResponse.data.text }, 'bot');
+            showMovieTicket(aiResponse.data.videoId, aiResponse.data.title);
+        } else {
+            addMessage({ text: aiResponse.data || aiResponse.response }, 'bot');
+        }
+    }
+    function addMessage(responseObj, sender) {
+        const messageRow = document.createElement('div');
+        messageRow.className = `message-row ${sender}-message-row`;
+        const currentTurn = { role: sender === 'user' ? 'user' : 'model', parts: [{ text: responseObj.text }] };
+        state.conversationHistory.push(currentTurn);
+        let content;
+        const avatarSrc = sender === 'bot' ?
+            (state.settings.aiAvatar === 'custom' ?
+                (localStorage.getItem('koojai_custom_avatar') || avatars.default) :
+                (avatars[state.settings.aiAvatar] || avatars.default)
+            ) : null;
+        if (sender === 'bot') {
+            const avatarHtml = `<img class="avatar" src="${avatarSrc}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">`;
+            content = `${avatarHtml}<div class="message bot">${responseObj.text.replace(/\n/g, '<br>')}</div>`;
+        } else {
+            content = `<div class="message user">${responseObj.text.replace(/\n/g, '<br>')}</div>`;
+        }
+        messageRow.innerHTML = content;
+        dom.chatBody.appendChild(messageRow);
+        dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
+        if (sender === 'bot' && state.settings.voiceEnabled) {
+            speakText(responseObj.text);
+        }
+        localStorage.setItem('koojai_grandfinale_history', JSON.stringify(state.conversationHistory.slice(-50)));
+    }
+    function addMusicPlayer(videoId) {
+        const messageRow = document.createElement('div');
+        messageRow.className = 'message-row ai-message-row';
+        const avatarSrc = state.settings.aiAvatar === 'custom' ?
+            (localStorage.getItem('koojai_custom_avatar') || avatars.default) :
+            (avatars[state.settings.aiAvatar] || avatars.default);
+        messageRow.innerHTML = `<img class="avatar" src="${avatarSrc}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;"><div class="message bot"><div class="music-player"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div></div>`;
+        dom.chatBody.appendChild(messageRow);
+        dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
+    }
+    function showTyping() {
+        const el = document.createElement('div');
+        el.id = 'typing';
+        el.className = 'message-row ai-message-row';
+        const avatarSrc = state.settings.aiAvatar === 'custom' ?
+            (localStorage.getItem('koojai_custom_avatar') || avatars.default) :
+            (avatars[state.settings.aiAvatar] || avatars.default);
+        el.innerHTML = `<img class="avatar" src="${avatarSrc}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;"><div class="message bot"><div class="typing-indicator">${typingIndicators[state.settings.typingIndicator] || typingIndicators['dots']}</div></div>`;
+        dom.chatBody.appendChild(el);
+        dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
+    }
+    function hideTyping() {
+        const el = document.getElementById('typing');
+        if (el) el.remove();
+    }
+    function showModal(title, content) {
+        dom.toolTitle.innerHTML = title;
+        dom.toolContent.innerHTML = content;
+        dom.toolModal.classList.add('active');
+    }
+    function closeModal() {
+        dom.toolModal.classList.remove('active');
+    }
+    // ========== ฟีเจอร์หลัก ==========
+    function showHistoryModal() {
+        const searchTerm = prompt("ค้นหาในประวัติ (เว้นว่างเพื่อดูทั้งหมด):") || "";
+        let historyHtml = '';
+        const filtered = state.conversationHistory.filter(item =>
+            item.parts[0].text.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        if (filtered.length === 0) {
+            historyHtml = '<p>ไม่พบข้อความที่ตรงกับคำค้นหาค่ะ</p>';
+        } else {
+            filtered.forEach(item => {
+                const role = item.role === 'user' ? 'คุณ' : state.settings.aiName;
+                const text = item.parts[0].text;
+                if (!text.startsWith('<img')) {
+                    historyHtml += `<p style="border-bottom:1px solid #eee; padding:4px 0; font-size:0.9rem;"><strong>${role}:</strong> ${text}</p>`;
+                }
+            });
+        }
+        showModal('📜 ประวัติการสนทนา', historyHtml);
+    }
+    function showAssessmentModal() {
+        const content = `
+            <h3>ประเมินสุขภาพจิต (DASS-21)</h3>
+            <p>แบบประเมินนี้ช่วยวัดระดับความเครียด ความวิตกกังวล และภาวะซึมเศร้า</p>
+            <button class="assessment-choice-btn" onclick="startDASS21()">เริ่มแบบประเมิน</button>
+            <div style="margin-top:15px;padding:15px;background:var(--ai-bubble-bg);border-radius:12px;">
+                <h4>สายด่วนสุขภาพจิต</h4>
+                <p>📞 <strong>1323</strong> (กรมสุขภาพจิต - ฟรี 24 ชม.)</p>
+                <p>💬 LINE: <strong>@mentalhealth</strong></p>
+            </div>
+        `;
+        showModal('🧠 ประเมินสุขภาพจิต', content);
+    }
+    function startDASS21() {
+        const questions = [
+            "ฉันรู้สึกว่าไม่สามารถคลายความตึงเครียดหรือความกังวลได้",
+            "ฉันรู้สึกปากแห้ง",
+            "ฉันรู้สึกว่าไม่มีพลังจะทำสิ่งต่างๆ",
+            "ฉันรู้สึกวิตกกังวลเกี่ยวกับสถานการณ์ที่อาจทำให้ฉันเสียหน้า",
+            "ฉันรู้สึกว่าไม่มีอะไรจะคาดหวังในอนาคต",
+            "ฉันรู้สึกหงุดหงิดง่าย",
+            "ฉันรู้สึกว่าชีวิตของฉันไร้ค่า",
+            "ฉันรู้สึกว่าใจเต้นเร็วโดยไม่มีเหตุผล",
+            "ฉันรู้สึกว่าหายใจไม่ทั่วท้อง",
+            "ฉันรู้สึกว่าไม่มีใครเข้าใจฉัน",
+            "ฉันรู้สึกว่าไม่สามารถควบคุมอารมณ์ได้",
+            "ฉันรู้สึกว่าไม่มีใครรักฉัน",
+            "ฉันรู้สึกว่าไม่มีความสุข",
+            "ฉันรู้สึกว่าไม่มีแรงจูงใจ",
+            "ฉันรู้สึกว่าไม่มีใครอยู่ข้างฉัน",
+            "ฉันรู้สึกว่าไม่มีความหวัง",
+            "ฉันรู้สึกว่าไม่มีค่า",
+            "ฉันรู้สึกว่าไม่มีใครสนใจฉัน",
+            "ฉันรู้สึกว่าไม่มีใครอยู่กับฉัน",
+            "ฉันรู้สึกว่าไม่มีใครรับฟังฉัน",
+            "ฉันรู้สึกว่าไม่มีใครเข้าใจฉันจริงๆ"
+        ];
+        let current = 0;
+        let scores = [];
+        function showDASSQuestion() {
+            if (current >= questions.length) {
+                const total = scores.reduce((a, b) => a + b, 0);
+                let level = "ปกติ";
+                if (total >= 15) level = "รุนแรง";
+                else if (total >= 10) level = "ปานกลาง";
+                else if (total >= 5) level = "เล็กน้อย";
+                showModal('📊 ผลการประเมิน DASS-21', `
+                    <h3>คะแนนรวม: ${total}</h3>
+                    <p>ระดับ: ${level}</p>
+                    <div style="margin-top:15px;padding:15px;background:var(--ai-bubble-bg);border-radius:12px;">
+                        <h4>คำแนะนำ</h4>
+                        <p>หากคุณรู้สึกไม่สบายใจ โปรดติดต่อผู้เชี่ยวชาญ</p>
+                        <p>📞 1323 | 💬 LINE: @mentalhealth</p>
+                    </div>
+                `);
+                return;
+            }
+            const options = [
+                { label: "ไม่เลย", value: 0 },
+                { label: "บางครั้ง", value: 1 },
+                { label: "บ่อย", value: 2 },
+                { label: "ตลอดเวลา", value: 3 }
+            ];
+            let html = `<div class="dass-question"><strong>คำถามที่ ${current + 1}:</strong><br>${questions[current]}</div>`;
+            html += '<div style="display:grid;gap:8px;">';
+            options.forEach((opt, i) => {
+                html += `<div class="dass-option" data-value="${opt.value}" onclick="selectDASSOption(this, ${current})">${opt.label}</div>`;
+            });
+            html += '</div>';
+            html += `<div style="margin-top:15px;"><button class="assessment-choice-btn" ${current === 0 ? 'disabled' : ''} onclick="prevDASS()">ย้อนกลับ</button> <button class="assessment-choice-btn" onclick="nextDASS()">ถัดไป</button></div>`;
+            showModal('🧠 แบบประเมิน DASS-21', html);
+        }
+        window.selectDASSOption = (el, qIndex) => {
+            document.querySelectorAll('.dass-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            scores[qIndex] = parseInt(el.dataset.value);
+        };
+        window.nextDASS = () => {
+            if (scores[current] === undefined) {
+                showToast("กรุณาเลือกคำตอบก่อนค่ะ");
+                return;
+            }
+            current++;
+            showDASSQuestion();
+        };
+        window.prevDASS = () => {
+            if (current > 0) {
+                current--;
+                showDASSQuestion();
+            }
+        };
+        showDASSQuestion();
+    }
+    function showHospitalFinderModal() {
+        showModal('🏥 ค้นหาโรงพยาบาล', `
+            <p>ระบบจะใช้ตำแหน่งของคุณเพื่อค้นหาโรงพยาบาลใกล้ที่สุด</p>
+            <button id="open-maps-btn" class="assessment-choice-btn" style="text-align:center; width:100%;">ค้นหาเลย</button>
+        `);
+        setTimeout(() => {
+            document.getElementById('open-maps-btn').onclick = () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            const { latitude, longitude } = pos.coords;
+                            const url = `https://www.google.com/maps/search/hospital/@${latitude},${longitude},15z`;
+                            window.open(url, '_blank');
+                            closeModal();
+                        },
+                        () => {
+                            showToast("ไม่สามารถเข้าถึงตำแหน่งได้ค่ะ");
+                            closeModal();
+                        }
+                    );
+                } else {
+                    showToast("เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่งค่ะ");
+                    closeModal();
+                }
+            };
+        }, 100);
+    }
+    function showSettingsModal() {
+        let bgButtonsHtml = '';
+        for (const bgKey in chatBackgrounds) {
+            bgButtonsHtml += `<button class="bg-btn" data-bg="${bgKey}" style="background-image:${chatBackgrounds[bgKey]};"></button>`;
+        }
+        const customBg = localStorage.getItem('koojai_custom_chat_bg');
+        if (customBg) {
+            bgButtonsHtml += `<button class="bg-btn" data-bg="custom" style="background-image:url('${customBg}');"></button>`;
+        }
+        let avatarButtonsHtml = '';
+        for (const key in avatars) {
+            avatarButtonsHtml += `<button class="avatar-btn" data-avatar="${key}" style="background-image:url('${avatars[key]}'); background-size: cover;"></button>`;
+        }
+        const customAvatar = localStorage.getItem('koojai_custom_avatar');
+        if (customAvatar) {
+            avatarButtonsHtml += `<button class="avatar-btn" data-avatar="custom" style="background-image:url('${customAvatar}'); background-size: cover;"></button>`;
+        }
+        let typingOptionsHtml = '';
+        for (const key in typingIndicators) {
+            typingOptionsHtml += `<option value="${key}">${key}</option>`;
+        }
+        const content = `
+            <div style="margin-bottom: 12px;">
+                <label for="ai-name-input"><strong>ชื่อ AI:</strong></label>
+                <input type="text" id="ai-name-input" value="${state.settings.aiName}" style="width:100%; padding:8px; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label><strong>รูปโปรไฟล์ AI:</strong></label>
+                <div class="avatar-selector">${avatarButtonsHtml}</div>
+                <div class="upload-btn" id="upload-avatar-btn">⬆️ อัปโหลดรูปโปรไฟล์</div>
+                <input type="file" id="avatar-upload-input" accept="image/*" hidden>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label><strong>ภาษา:</strong></label>
+                <select id="language-select" style="width:100%; padding:8px; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+                    <option value="th">ไทย</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label><strong>ธีมสี:</strong></label>
+                <div class="theme-selector">
+                    <button class="theme-btn" data-theme="pink" style="background-color: #ff69b4;"></button>
+                    <button class="theme-btn" data-theme="mint" style="background-color: #26a69a;"></button>
+                    <button class="theme-btn" data-theme="lavender" style="background-color: #9575cd;"></button>
+                    <button class="theme-btn" data-theme="sunset" style="background-color: #ff7043;"></button>
+                    <button class="theme-btn" data-theme="ocean" style="background-color: #0288d1;"></button>
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label><strong>พื้นหลังช่องแชท:</strong></label>
+                <div class="background-selector">
+                    <button class="bg-btn" data-bg="default">❌</button>
+                    ${bgButtonsHtml}
+                </div>
+                <div class="upload-btn" id="upload-bg-btn">⬆️ อัปโหลดพื้นหลัง</div>
+                <input type="file" id="bg-upload-input" accept="image/*" hidden>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label><strong>สไตล์การรอคำตอบ:</strong></label>
+                <select id="typing-style-select" style="width:100%; padding:8px; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+                    ${typingOptionsHtml}
+                </select>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label><input type="checkbox" id="dark-mode-toggle"> 🌙 โหมดมืด</label>
+            </div>
+            <div><label><input type="checkbox" id="voice-toggle"> 🔊 เปิดเสียงอ่านคำตอบ</label></div>`;
+        showModal('⚙️ ตั้งค่า', content);
+        setTimeout(() => {
+            document.getElementById('voice-toggle').checked = state.settings.voiceEnabled;
+            document.getElementById('voice-toggle').onchange = function () { state.settings.voiceEnabled = this.checked; saveSettings(); };
+            document.getElementById('ai-name-input').value = state.settings.aiName;
+            document.getElementById('ai-name-input').onchange = function () { state.settings.aiName = this.value; dom.aiNameDisplay.textContent = state.settings.aiName; saveSettings(); };
+            document.getElementById('language-select').value = state.settings.language;
+            document.getElementById('language-select').onchange = function () { state.settings.language = this.value; saveSettings(); };
+            document.getElementById('typing-style-select').value = state.settings.typingIndicator;
+            document.getElementById('typing-style-select').onchange = function () { state.settings.typingIndicator = this.value; saveSettings(); };
+            document.getElementById('dark-mode-toggle').checked = state.settings.darkMode;
+            document.getElementById('dark-mode-toggle').onchange = function () { toggleDarkMode(); };
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                if (btn.dataset.theme === state.settings.theme) btn.classList.add('active');
+                btn.onclick = () => {
+                    setTheme(btn.dataset.theme);
+                    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+            });
+            document.querySelectorAll('.bg-btn').forEach(btn => {
+                if (state.settings.chatBackground === btn.dataset.bg) btn.classList.add('active');
+                btn.onclick = () => {
+                    document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    setChatBackground(btn.dataset.bg);
+                };
+            });
+            document.querySelectorAll('.avatar-btn').forEach(btn => {
+                if (state.settings.aiAvatar === btn.dataset.avatar) btn.classList.add('active');
+                btn.onclick = () => {
+                    document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    setAvatar(btn.dataset.avatar);
+                };
+            });
+            document.getElementById('upload-avatar-btn').onclick = () => {
+                document.getElementById('avatar-upload-input').click();
+            };
+            document.getElementById('avatar-upload-input').onchange = (e) => {
+                handleFileUpload(e.target.files[0], 'avatar');
+            };
+            document.getElementById('upload-bg-btn').onclick = () => {
+                document.getElementById('bg-upload-input').click();
+            };
+            document.getElementById('bg-upload-input').onchange = (e) => {
+                handleFileUpload(e.target.files[0], 'background');
+            };
+        }, 100);
+    }
+    function showMovieTicket(videoId, title) {
+        const content = `<div style="text-align:center;"><h4>รอบฉายสำหรับคุณ 🎬</h4><p style="margin:8px 0;"><strong>เรื่อง:</strong> ${title}</p><button id="enter-theater-btn" class="assessment-choice-btn" style="width:100%;">เข้าโรงภาพยนตร์</button></div>`;
+        showModal('ตั๋วหนังของคุณ', content);
+        setTimeout(() => {
+            document.getElementById('enter-theater-btn').onclick = () => {
+                const theaterContent = `<div class="music-player" style="background:black;"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay" allowfullscreen></iframe></div>`;
+                showModal(`กำลังฉาย: ${title}`, theaterContent);
+            };
+        }, 100);
+    }
+    // ========== เกม 10 แบบ ==========
+    function showGameModal() {
+        const games = [
+            { name: "O-X", func: initTicTacToe },
+            { name: "เป่ายิ้งฉุบ", func: initRPS },
+            { name: "ทอยลูกเต๋า", func: initDice },
+            { name: "ทายเลข", func: initGuessNumber },
+            { name: "คำนวณ BMI", func: initBMI },
+            { name: "คำพูดดีๆ", func: initMotivation },
+            { name: "ทายสี", func: initColorGuess },
+            { name: "คำนวณอายุ", func: initAgeCalc },
+            { name: "สุ่มเลข", func: initRandomNumber },
+            { name: "คำคมวันนี้", func: initQuote }
+        ];
+        let gameHtml = '<div id="game-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">';
+        games.forEach((game, index) => {
+            gameHtml += `<button class="game-btn" data-index="${index}">${game.name}</button>`;
+        });
+        gameHtml += '</div>';
+        showModal('🎮 เกมเซ็นเตอร์', gameHtml);
+        setTimeout(() => {
+            document.querySelectorAll('#game-list .game-btn').forEach((btn, i) => {
+                btn.addEventListener('click', () => {
+                    games[i].func();
+                });
+            });
+        }, 100);
+    }
+    function initDice() {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        showModal('🎲 ทอยลูกเต๋า', `<h3>คุณทอยได้: ${roll}!</h3><button class="assessment-choice-btn" onclick="initDice()">ทอยอีก</button>`);
+    }
+    function initGuessNumber() {
+        const secret = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+        const content = `
+            <p>ทายเลข 1-100 ให้ถูก!</p>
+            <input type="number" id="guess-input" min="1" max="100" placeholder="ใส่เลข..." style="width:100%; padding:8px; margin:10px 0; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+            <button class="assessment-choice-btn" id="guess-submit-btn">ทาย!</button>
+            <div id="guess-result"></div>
+        `;
+        showModal('🔢 ทายเลข', content);
+        setTimeout(() => {
+            document.getElementById('guess-submit-btn').onclick = () => {
+                const guess = parseInt(document.getElementById('guess-input').value);
+                if (isNaN(guess)) return;
+                attempts++;
+                const resultDiv = document.getElementById('guess-result');
+                if (guess === secret) {
+                    resultDiv.innerHTML = `<h4>ถูกต้อง! 🎉 ใช้ไป ${attempts} ครั้ง</h4><button class="assessment-choice-btn" onclick="initGuessNumber()">เล่นใหม่</button>`;
+                } else if (guess < secret) {
+                    resultDiv.innerHTML = "มากกว่านี้!";
+                } else {
+                    resultDiv.innerHTML = "น้อยกว่านี้!";
+                }
+            };
+        }, 100);
+    }
+    function initMotivation() {
+        const quotes = [
+            "คุณทำได้ดีมากวันนี้! 💖",
+            "อย่าลืมหายใจลึกๆ นะ 🌬️",
+            "คุณมีค่ามากกว่าที่คิด ✨",
+            "วันนี้เหนื่อยใช่ไหม? พักได้นะ 💤",
+            "คุณคือแรงบันดาลใจของใครบางคน 💫"
+        ];
+        const quote = quotes[Math.floor(Math.random() * quotes.length)];
+        showModal('💬 คำพูดดีๆ วันนี้', `<h3>${quote}</h3><button class="assessment-choice-btn" onclick="initMotivation()">สุ่มอีก</button>`);
+    }
+    function initRandomNumber() {
+        const num = Math.floor(Math.random() * 1000);
+        showModal('🔢 สุ่มเลข', `<h3>เลขสุ่ม: ${num}</h3><button class="assessment-choice-btn" onclick="initRandomNumber()">สุ่มอีก</button>`);
+    }
+    function initQuote() {
+        const quotes = [
+            "ชีวิตคือการเดินทาง ไม่ใช่จุดหมาย — Confucius",
+            "ความล้มเหลวคือโอกาสในการเริ่มต้นใหม่อย่างชาญฉลาด — Edison",
+            "อย่ารอโอกาส จงสร้างมัน — George Bernard Shaw"
+        ];
+        const quote = quotes[Math.floor(Math.random() * quotes.length)];
+        showModal('📜 คำคมวันนี้', `<h4>${quote}</h4><button class="assessment-choice-btn" onclick="initQuote()">คำคมใหม่</button>`);
+    }
+    function initBMI() {
+        const content = `
+            <p>คำนวณดัชนีมวลกาย (BMI)</p>
+            <input type="number" id="height-input" placeholder="ส่วนสูง (ซม.)" style="width:100%; padding:8px; margin:5px 0; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+            <input type="number" id="weight-input" placeholder="น้ำหนัก (กก.)" style="width:100%; padding:8px; margin:5px 0; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+            <button class="assessment-choice-btn" id="bmi-submit-btn">คำนวณ</button>
+            <div id="bmi-result"></div>
+        `;
+        showModal('⚖️ คำนวณ BMI', content);
+        setTimeout(() => {
+            document.getElementById('bmi-submit-btn').onclick = () => {
+                const height = parseFloat(document.getElementById('height-input').value);
+                const weight = parseFloat(document.getElementById('weight-input').value);
+                const resultDiv = document.getElementById('bmi-result');
+                if (!height || !weight) {
+                    resultDiv.innerHTML = "กรุณากรอกข้อมูลให้ครบถ้วนค่ะ";
+                    return;
+                }
+                const bmi = weight / ((height / 100) ** 2);
+                let category = "";
+                if (bmi < 18.5) category = "น้ำหนักน้อยกว่าปกติ";
+                else if (bmi < 25) category = "น้ำหนักปกติ";
+                else if (bmi < 30) category = "น้ำหนักเกิน";
+                else category = "อ้วน";
+                resultDiv.innerHTML = `<h4>BMI: ${bmi.toFixed(1)}</h4><p>${category}</p>`;
+            };
+        }, 100);
+    }
+    function initColorGuess() {
+        const colors = ["แดง", "น้ำเงิน", "เขียว", "เหลือง", "ม่วง"];
+        const secret = colors[Math.floor(Math.random() * colors.length)];
+        const content = `
+            <p>ทายสีที่ AI คิดไว้!</p>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0;">
+                ${colors.map(c => `<button class="assessment-choice-btn" data-color="${c}" data-secret="${secret}">${c}</button>`).join('')}
+            </div>
+            <div id="color-result"></div>
+        `;
+        showModal('🎨 ทายสี', content);
+        setTimeout(() => {
+            document.querySelectorAll('.assessment-choice-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const guess = btn.dataset.color;
+                    const secret = btn.dataset.secret;
+                    const resultDiv = document.getElementById('color-result');
+                    if (guess === secret) {
+                        resultDiv.innerHTML = `<h4>ถูกต้อง! 🎉 สีคือ ${secret}</h4><button class="assessment-choice-btn" onclick="initColorGuess()">เล่นใหม่</button>`;
+                    } else {
+                        resultDiv.innerHTML = "ไม่ใช่สีนี้! ลองอีกครั้ง";
+                    }
+                };
+            });
+        }, 100);
+    }
+    function initAgeCalc() {
+        const content = `
+            <p>คำนวณอายุของคุณ</p>
+            <input type="date" id="birthdate-input" style="width:100%; padding:8px; margin:10px 0; border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);">
+            <button class="assessment-choice-btn" id="age-submit-btn">คำนวณ</button>
+            <div id="age-result"></div>
+        `;
+        showModal('📅 คำนวณอายุ', content);
+        setTimeout(() => {
+            document.getElementById('age-submit-btn').onclick = () => {
+                const birthdate = new Date(document.getElementById('birthdate-input').value);
+                const today = new Date();
+                const resultDiv = document.getElementById('age-result');
+                if (isNaN(birthdate.getTime())) {
+                    resultDiv.innerHTML = "กรุณาเลือกวันเกิดค่ะ";
+                    return;
+                }
+                let age = today.getFullYear() - birthdate.getFullYear();
+                const m = today.getMonth() - birthdate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+                    age--;
+                }
+                resultDiv.innerHTML = `<h4>อายุของคุณ: ${age} ปี</h4>`;
+            };
+        }, 100);
+    }
+    function initTicTacToe() {
+        const content = `
+            <div id="tictactoe-status" style="text-align:center; margin-bottom:10px;">เกม O-X: ตาคุณ (X)</div>
+            <div id="game-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 200px; height: 200px; margin: 0 auto;"></div>
+        `;
+        showModal('🎮 O-X', content);
+        setTimeout(() => {
+            let cells = Array(9).fill(null);
+            let currentPlayer = 'X';
+            let gameActive = true;
+            const status = document.getElementById('tictactoe-status');
+            const gameBoard = document.getElementById('game-board');
+            const winningConditions = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+            function checkWinner() {
+                for (let condition of winningConditions) {
+                    const [a, b, c] = condition;
+                    if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
+                        gameActive = false;
+                        status.textContent = `ผู้ชนะคือ ${cells[a]}!`;
+                        return;
+                    }
+                }
+                if (!cells.includes(null)) {
+                    gameActive = false;
+                    status.textContent = "เสมอ!";
+                }
+            }
+            function botMove() {
+                if (!gameActive) return;
+                let availableCells = cells.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
+                if (availableCells.length > 0) {
+                    let move = availableCells[Math.floor(Math.random() * availableCells.length)];
+                    cells[move] = 'O';
+                    gameBoard.children[move].textContent = 'O';
+                    currentPlayer = 'X';
+                    status.textContent = 'ตาคุณ (X)';
+                    checkWinner();
+                }
+            }
+            function handleCellClick(index) {
+                if (!gameActive || cells[index]) return;
+                cells[index] = currentPlayer;
+                gameBoard.children[index].textContent = currentPlayer;
+                checkWinner();
+                if (gameActive) {
+                    currentPlayer = 'O';
+                    status.textContent = 'รอ AI เดิน...';
+                    setTimeout(botMove, 500);
+                }
+            }
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.style.cssText = "width:100%; height:100%; background: var(--ai-bubble-bg); border-radius:8px; display:flex; justify-content:center; align-items:center; font-size:2rem; font-weight:bold; cursor:pointer; color:var(--primary-color);";
+                cell.addEventListener('click', () => handleCellClick(i));
+                gameBoard.appendChild(cell);
+            }
+        }, 100);
+    }
+    function initRPS() {
+        const content = `
+            <div style="text-align:center; font-size: 2.5rem; margin:15px 0;">
+                <button class="toolkit-btn" style="font-size: 2.5rem;" data-choice="rock">✊</button>
+                <button class="toolkit-btn" style="font-size: 2.5rem;" data-choice="paper">✋</button>
+                <button class="toolkit-btn" style="font-size: 2.5rem;" data-choice="scissors">✌️</button>
+            </div>
+            <div id="rps-result" style="text-align:center; margin-top: 15px; font-weight: bold;">เลือกอาวุธของคุณ!</div>
+        `;
+        showModal('เป่ายิ้งฉุบ!', content);
+        setTimeout(() => {
+            document.querySelectorAll('.toolkit-btn[data-choice]').forEach(btn => {
+                btn.onclick = () => {
+                    const playerChoice = btn.dataset.choice;
+                    const choices = ['rock', 'paper', 'scissors'];
+                    const botChoice = choices[Math.floor(Math.random() * 3)];
+                    const resultDiv = document.getElementById('rps-result');
+                    let resultText = `คุณเลือก ${playerChoice}, AI เลือก ${botChoice}. `;
+                    if (playerChoice === botChoice) resultText += "เสมอ!";
+                    else if ((playerChoice === 'rock' && botChoice === 'scissors') || (playerChoice === 'paper' && botChoice === 'rock') || (playerChoice === 'scissors' && botChoice === 'paper')) {
+                        resultText += "คุณชนะ! 🎉";
+                    } else {
+                        resultText += "คุณแพ้ 😥";
+                    }
+                    resultDiv.textContent = resultText;
+                };
+            });
+        }, 100);
+    }
+    // ========== ฟีเจอร์สุขภาพจิต ==========
+    function showMoodDiary() {
+        const moodDiary = state.settings.moodDiary || [];
+        const moods = [
+            { emoji: '😊', label: 'มีความสุข', value: 4 },
+            { emoji: '🙂', label: 'รู้สึกดี', value: 3 },
+            { emoji: '😐', label: 'เฉยๆ', value: 2 },
+            { emoji: '😢', label: 'เศร้า', value: 1 },
+            { emoji: '😭', label: 'แย่มาก', value: 0 }
+        ];
+        let html = '<h3>วันนี้คุณรู้สึกอย่างไร?</h3><div id="mood-buttons" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0;">';
+        moods.forEach((mood, i) => {
+            html += `<button class="mood-btn" data-value="${mood.value}" data-label="${mood.emoji} ${mood.label}">${mood.emoji}</button>`;
+        });
+        html += '</div>';
+        html += `<textarea id="mood-note" placeholder="เขียนเพิ่มเติม..." style="width:100%;margin-top:10px;padding:10px;border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);"></textarea>`;
+        const last7 = moodDiary.slice(-7);
+        if (last7.length > 0) {
+            html += '<h4 style="margin-top:15px;">อารมณ์ 7 วันล่าสุด</h4><div style="display:flex;gap:6px;justify-content:center;">';
+            last7.forEach(entry => {
+                const date = new Date(entry.date).getDate();
+                const moodEmoji = ['😭', '😢', '😐', '🙂', '😊'][entry.mood];
+                html += `<div style="text-align:center; font-size:1.2rem;"><div>${moodEmoji}</div><small>${date}</small></div>`;
+            });
+            html += '</div>';
+        }
+        showModal('📓 ไดอารี่อารมณ์', html);
+        setTimeout(() => {
+            document.querySelectorAll('#mood-buttons .mood-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const moodValue = parseInt(btn.dataset.value);
+                    const label = btn.dataset.label;
+                    const note = document.getElementById('mood-note')?.value.trim() || '';
+                    const diary = state.settings.moodDiary || [];
+                    diary.push({
+                        date: new Date().toISOString(),
+                        mood: moodValue,
+                        note: note,
+                        label: label
+                    });
+                    state.settings.moodDiary = diary.slice(-30);
+                    saveSettings();
+                    showToast("บันทึกไดอารี่เรียบร้อยแล้วค่ะ 💖");
+                    closeModal();
+                });
+            });
+        }, 100);
+    }
+    function showHelpNow() {
+        const content = `
+            <button class="assessment-choice-btn" onclick="startBreathing()">🌬️ ฝึกหายใจ (4-7-8)</button>
+            <button class="assessment-choice-btn" onclick="startGrounding()">🌱 ฝึก Grounding (5-4-3-2-1)</button>
+            <div style="margin-top:12px;padding:12px;background:var(--ai-bubble-bg);border-radius:12px;">
+                <h4>สายด่วนสุขภาพจิต</h4>
+                <p>📞 <strong>1323</strong> (ฟรี 24 ชม.)</p>
+                <p>💬 LINE: <strong>@mentalhealth</strong></p>
+            </div>
+        `;
+        showModal('🆘 ช่วยฉันตอนนี้', content);
+    }
+    function startBreathing() {
+        let step = 0;
+        const steps = [
+            { text: "หายใจเข้า (4 วินาที)", seconds: 4, color: "#4CAF50" },
+            { text: "กลั้นหายใจ (7 วินาที)", seconds: 7, color: "#FF9800" },
+            { text: "หายใจออก (8 วินาที)", seconds: 8, color: "#F44336" }
+        ];
+        let cycle = 0;
+        const totalCycles = 4;
+        const breathingContent = `
+            <div style="text-align:center;">
+                <div id="breathing-circle" class="breathing-circle">เริ่มต้น</div>
+                <div id="breathing-instruction" style="margin-top:10px;font-size:1rem;">เตรียมตัว...</div>
+                <button class="assessment-choice-btn" id="stop-breathing" style="margin-top:12px;">หยุด</button>
+            </div>
+        `;
+        showModal('🌬️ ฝึกหายใจ', breathingContent);
+        setTimeout(() => {
+            const circle = document.getElementById('breathing-circle');
+            const instruction = document.getElementById('breathing-instruction');
+            const stopBtn = document.getElementById('stop-breathing');
+            let timer;
+            function nextStep() {
+                if (cycle >= totalCycles) {
+                    instruction.textContent = "คุณทำได้เยี่ยมมาก! 💖";
+                    circle.textContent = "เสร็จแล้ว!";
+                    circle.style.backgroundColor = "#9C27B0";
+                    return;
+                }
+                const currentStep = steps[step];
+                instruction.textContent = currentStep.text;
+                circle.style.backgroundColor = currentStep.color;
+                circle.style.transform = step === 2 ? 'scale(0.7)' : 'scale(1)';
+                circle.textContent = currentStep.seconds;
+                let count = currentStep.seconds;
+                timer = setInterval(() => {
+                    count--;
+                    if (count >= 0) {
+                        circle.textContent = count;
+                    } else {
+                        clearInterval(timer);
+                        step = (step + 1) % steps.length;
+                        if (step === 0) cycle++;
+                        nextStep();
+                    }
+                }, 1000);
+            }
+            stopBtn.onclick = () => {
+                if (timer) clearInterval(timer);
+                closeModal();
+            };
+            setTimeout(nextStep, 1000);
+        }, 100);
+    }
+    function startGrounding() {
+        const questions = [
+            "5 สิ่งที่คุณเห็น",
+            "4 สิ่งที่คุณสัมผัสได้",
+            "3 สิ่งที่คุณได้ยิน",
+            "2 สิ่งที่คุณได้กลิ่น",
+            "1 สิ่งที่คุณลิ้มรสได้"
+        ];
+        let current = 0;
+        let answers = [];
+        function showQuestion() {
+            if (current >= questions.length) {
+                let html = '<p>คุณทำได้เยี่ยม! 💖</p><div style="margin-top:10px;">';
+                answers.forEach((ans, i) => {
+                    html += `<div><strong>${questions[i]}</strong>: ${ans || '—'}</div>`;
+                });
+                html += '</div>';
+                showModal('🌱 Grounding เสร็จแล้ว!', html);
+                return;
+            }
+            const content = `
+                <h3>${questions[current]}</h3>
+                <textarea id="grounding-answer" placeholder="พิมพ์คำตอบ..." style="width:100%;height:80px;margin:10px 0;padding:8px;border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);"></textarea>
+                <div style="display:flex;gap:8px;">
+                    ${current > 0 ? '<button class="assessment-choice-btn" id="prev-grounding">ย้อนกลับ</button>' : ''}
+                    <button class="assessment-choice-btn" id="next-grounding">${current === questions.length - 1 ? 'เสร็จสิ้น' : 'ถัดไป'}</button>
+                </div>
+            `;
+            showModal('🌱 Grounding', content);
+            setTimeout(() => {
+                document.getElementById('grounding-answer').value = answers[current] || '';
+                document.getElementById('next-grounding').onclick = () => {
+                    answers[current] = document.getElementById('grounding-answer').value.trim();
+                    current++;
+                    showQuestion();
+                };
+                if (current > 0) {
+                    document.getElementById('prev-grounding').onclick = () => {
+                        current--;
+                        showQuestion();
+                    };
+                }
+            }, 100);
+        }
+        showQuestion();
+    }
+    function showSilentMode() {
+        const content = `
+            <h3>💭 ระบายแบบไม่ต้องตอบ</h3>
+            <p>พิมพ์อะไรก็ได้... คู่ใจจะรับฟังโดยไม่ตัดสิน 💖</p>
+            <textarea id="silent-input" placeholder="ระบายที่นี่..." style="width:100%;height:120px;margin:10px 0;padding:10px;border-radius:8px; background: var(--ai-bubble-bg); color: var(--text-color); border:1px solid var(--secondary-color);"></textarea>
+            <button class="assessment-choice-btn" id="silent-submit-btn">ส่ง</button>
+        `;
+        showModal('💭 ระบายแบบไม่ต้องตอบ', content);
+        setTimeout(() => {
+            document.getElementById('silent-submit-btn').onclick = () => {
+                const text = document.getElementById('silent-input').value.trim();
+                if (!text) return;
+                addMessage({ text: text }, 'user');
+                setTimeout(() => {
+                    addMessage({ text: "💖" }, 'bot');
+                }, 500);
+                closeModal();
+            };
+        }, 100);
+    }
+    function speakText(text) {
+        if (!window.speechSynthesis || !state.settings.voiceEnabled) return;
+        const utterance = new SpeechSynthesisUtterance(text.replace(/<[^>]*>/g, '').replace(/อ้างอิง:.*/, ''));
+        utterance.lang = state.settings.language === 'th' ? 'th-TH' : 'en-US';
+        utterance.rate = 1;
+        utterance.pitch = 1.2;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+    }
+    function updateClock() {
+        if (dom.clock) dom.clock.textContent = new Date().toLocaleTimeString(state.settings.language === 'th' ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    function clearChat() {
+        if (confirm("แน่ใจหรือคะว่าจะล้างประวัติทั้งหมด?")) {
+            state.conversationHistory = [];
+            localStorage.removeItem('koojai_grandfinale_history');
+            dom.chatBody.innerHTML = '';
+            addMessage({ text: `ล้างแชทเรียบร้อยแล้วค่ะ! ตอนนี้เราเริ่มต้นใหม่ได้เลย 💖` }, 'bot');
+        }
+    }
+    // ========== INIT APP ==========
+    window.addEventListener('load', () => {
+        dom = {
+            chatBody: document.getElementById('chat-body'),
+            userInput: document.getElementById('user-input'),
+            sendBtn: document.getElementById('send-btn'),
+            moreBtn: document.getElementById('more-btn'),
+            moreMenu: document.getElementById('more-menu'),
+            historyItem: document.getElementById('history-item'),
+            clearItem: document.getElementById('clear-item'),
+            settingsItem: document.getElementById('settings-item'),
+            hospitalBtn: document.getElementById('hospital-btn'),
+            gameBtn: document.getElementById('game-btn'),
+            toolModal: document.getElementById('tool-modal'),
+            toolTitle: document.getElementById('tool-title'),
+            toolContent: document.getElementById('tool-content'),
+            aiNameDisplay: document.getElementById('ai-name-display'),
+            body: document.body,
+            clock: document.getElementById('clock'),
+            assessmentBtn: document.getElementById('assessment-btn'),
+            attachBtn: document.getElementById('attach-btn'),
+            cameraBtn: document.getElementById('camera-btn'),
+            imageInput: document.getElementById('image-input'),
+            cameraInput: document.getElementById('camera-input'),
+            toast: document.getElementById('toast'),
+            aiAvatarDisplay: document.getElementById('ai-avatar-display'),
+            moodBtn: document.getElementById('mood-btn'),
+            helpNowBtn: document.getElementById('help-now-btn'),
+            silentBtn: document.getElementById('silent-btn')
+        };
+        state = {
+            conversationHistory: JSON.parse(localStorage.getItem('koojai_grandfinale_history') || '[]'),
+            settings: JSON.parse(localStorage.getItem('koojai_grandfinale_settings') || JSON.stringify({
+                aiName: 'คู่ใจ',
+                aiAvatar: 'default',
+                theme: 'pink',
+                voiceEnabled: true,
+                chatBackground: 'default',
+                typingIndicator: 'dots',
+                language: 'th',
+                darkMode: false,
+                moodDiary: [],
+                affirmations: []
+            }))
+        };
+        if (state.settings.darkMode) {
+            document.body.classList.add('dark-mode');
+        }
+        setTheme(state.settings.theme);
+        setChatBackground(state.settings.chatBackground);
+        setAvatar(state.settings.aiAvatar);
+        dom.aiNameDisplay.textContent = state.settings.aiName;
+        if (state.conversationHistory.length === 0) {
+            addMessage({ text: `สวัสดีค่ะ! หนูชื่อ '${state.settings.aiName}' 💖
+ลองใช้ปุ่ม 😊 หรือ 🆘 ได้เลยนะคะ` }, 'bot');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        dom.sendBtn.addEventListener('click', handleSend);
+        dom.userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+        dom.moreBtn.addEventListener('click', () => { dom.moreMenu.classList.toggle('active'); });
+        document.addEventListener('click', (e) => {
+            if (!dom.moreBtn.contains(e.target) && !dom.moreMenu.contains(e.target)) {
+                dom.moreMenu.classList.remove('active');
+            }
+        });
+        dom.historyItem.addEventListener('click', showHistoryModal);
+        dom.clearItem.addEventListener('click', clearChat);
+        dom.settingsItem.addEventListener('click', showSettingsModal);
+        dom.assessmentBtn.addEventListener('click', showAssessmentModal);
+        dom.hospitalBtn.addEventListener('click', showHospitalFinderModal);
+        dom.attachBtn.addEventListener('click', () => dom.imageInput.click());
+        dom.cameraBtn.addEventListener('click', () => dom.cameraInput.click());
+        dom.imageInput.addEventListener('change', handleSend);
+        dom.cameraInput.addEventListener('change', handleSend);
+        dom.gameBtn.addEventListener('click', showGameModal);
+        dom.moodBtn.addEventListener('click', showMoodDiary);
+        dom.helpNowBtn.addEventListener('click', showHelpNow);
+        dom.silentBtn.addEventListener('click', showSilentMode);
+        document.querySelector('.close-modal').addEventListener('click', closeModal);
+        dom.toolModal.addEventListener('click', (e) => { if (e.target === dom.toolModal) closeModal(); });
+    });
+    </script>
+</body>
+</html>
